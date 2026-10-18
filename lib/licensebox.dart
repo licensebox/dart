@@ -69,6 +69,7 @@ final class Client {
     try{return using((a){final out=a<Pointer<Utf8>>();final r=_Native.call(_handle,operation.toNativeUtf8(allocator:a),jsonEncode(args).toNativeUtf8(allocator:a),out);if(r!=0 || _failure!=null){_Native.free(out.value.cast());if(_failure!=null){final detail=_failure.toString();_failure=null;throw LicenseboxException('callback_error',detail);}throw _error(r,_handle);}return _output(out.value);});}finally{_busy=false;}
   }
   Object? lease()=>_call('lease');
+  Object? heartbeat(String module)=>_call('heartbeat',{'module':_arg(module)});
   Object? requireModule(String module)=>_call('require',{'module':_arg(module)});
   Object? status()=>_call('status');
   Object? signIn({double timeout=0}){if(!timeout.isFinite)throw const LicenseboxException('invalid_argument');return _call('sign_in',{'timeout':timeout});}

@@ -19,3 +19,17 @@ finally { client.close(); }
 ```
 
 Dart 3.3+ native VM/AOT with `dart:ffi` is required; Flutter desktop can use the same native path. These synchronous calls can block during sign-in/network operations; run application work in a suitable owning isolate and close the client in that isolate. Browser/WASM is unsupported. Methods: `lease`, `requireModule`, `status`, `signIn`, `logout`, `modules`, `requests`, `requestAccess`, `accessLink`, `record`, `close`. Static helpers: `deriveBinding`, `nativeBinding`, `verifyLease`. `LicenseboxException.code` preserves protocol errors.
+
+## Optional heartbeat checkpoints
+
+Call `client.heartbeat('core')` with a module name to force a silent server check. It returns
+`{"lease": ..., "online": true}` after contact, or `online: false` only while
+an already verified offline lease remains valid. Heartbeat never activates,
+transfers a seat or creates an installation key; sign in explicitly first.
+Explicit refusals and removed module grants stop access immediately.
+
+Background work remains opt-in. Schedule checkpoints in your application's own
+runtime/event loop and stop protected work at the last verified lease's `expires`
+time even if a renewal hangs. Use the signed `heartbeat.interval_seconds` when
+present (otherwise a 300-second interval is a reasonable default); a failed
+contact never extends the signed deadline. This SDK starts no heartbeat threads.
