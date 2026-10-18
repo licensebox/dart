@@ -1,0 +1,21 @@
+# Licensebox dart SDK
+
+MIT · 2026 Vijai Kumar · https://meshing.engineer
+
+Native application licensing for Linux. Requires the public Licensebox C v0.3.0 shared library. Set `LICENSEBOX_LIB_DIR` (or `LICENSEBOX_LIBRARY` for runtime FFI bindings), and add that directory to `LD_LIBRARY_PATH` when linking native extensions. The host library retains installation keys, verifies leases, enforces native identity and stores usage locally. Other platforms and browser runtimes are unvalidated.
+
+The client supports lease, require/module check, local status, sign-in, logout, modules, access requests, access links, and usage recording. Stateless derive/native binding and lease verification helpers are included. Close each client explicitly in a finally/ensure block. Trusted clock, machine binding, sign-in and cancellation hooks are callable platform integration points; never source identity from end users. Callbacks must not reenter or close their client. Callback exceptions become `callback_error` after the native call returns. Native-owned JSON is always freed.
+
+`ci/setup.sh` installs dependencies on disposable Ubuntu 24.04 CI runners only. `ci/test.sh` compiles/tests the actual binding and package consumer. `ci/adapter.sh` runs the shared protocol adapter after testing/building. Run `python3 ../protocol/conformance/run.py --adapter "$PWD/ci/adapter.sh"` with the native environment configured. All test credentials and identities are synthetic.
+
+Build the native core using `scripts/install-native.sh`, then set `LICENSEBOX_LIB_DIR="$PWD/.native/lib"` and `LD_LIBRARY_PATH="$LICENSEBOX_LIB_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"`. Supply only administrator-provided trusted Ed25519 public keys.
+
+```dart
+import 'package:licensebox/licensebox.dart';
+final client = Client(product: 'my-app', keys: {'product-key': trustedPublicKey},
+  hooks: Hooks(onSignIn: (url, code) => showSignIn(url, code)));
+try { client.requireModule('core'); /* Protected work. */ }
+finally { client.close(); }
+```
+
+Dart 3.3+ native VM/AOT with `dart:ffi` is required; Flutter desktop can use the same native path. These synchronous calls can block during sign-in/network operations; run application work in a suitable owning isolate and close the client in that isolate. Browser/WASM is unsupported. Methods: `lease`, `requireModule`, `status`, `signIn`, `logout`, `modules`, `requests`, `requestAccess`, `accessLink`, `record`, `close`. Static helpers: `deriveBinding`, `nativeBinding`, `verifyLease`. `LicenseboxException.code` preserves protocol errors.

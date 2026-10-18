@@ -1,0 +1,9 @@
+name: licensebox
+description: Native Licensebox application licensing SDK, with host identity and lease verification.
+version: 0.1.0
+homepage: https://meshing.engineer
+repository: https://github.com/licensebox/dart
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+dependencies:
+  ffi: ^2.1.3
