@@ -52,10 +52,10 @@ final class Client {
   final List<void Function()> _release=[];
   Object? _failure;
   bool _busy=false,_closed=false;
-  Client({required String product,required Map<String,String> keys,String version='',String? server,String? directory,String? caBundle,Hooks hooks=const Hooks()}){
+  Client({required String product,required Map<String,String> keys,String version='',String? server,String? directory,String? caBundle,String? enrolToken,Hooks hooks=const Hooks()}){
     try {
     final options=<String,Object>{'product':_arg(product),'keys':jsonDecode(_keys(keys)),'version':_arg(version)};
-    if(server!=null)options['server']=_arg(server);if(directory!=null)options['directory']=_arg(directory);if(caBundle!=null)options['ca_bundle']=_arg(caBundle);
+    if(server!=null)options['server']=_arg(server);if(directory!=null)options['directory']=_arg(directory);if(caBundle!=null)options['ca_bundle']=_arg(caBundle);if(enrolToken!=null)options['enrol_token']=_arg(enrolToken);
     if(hooks.onSignIn!=null){final cb=NativeCallable<Void Function(Pointer<Void>,Pointer<Utf8>,Pointer<Utf8>)>.isolateLocal((Pointer<Void> ctx,Pointer<Utf8> u,Pointer<Utf8> c){try{hooks.onSignIn!(u.toDartString(),c.toDartString());}catch(e){_failure=e;}});_callbacks.ref.signIn=cb.nativeFunction;_release.add(cb.close);}
     if(hooks.clock!=null){final cb=NativeCallable<Double Function(Pointer<Void>)>.isolateLocal((Pointer<Void> ctx){try{final v=hooks.clock!();if(!v.isFinite)throw const LicenseboxException('invalid_argument');return v;}catch(e){_failure=e;return 0.0;}},exceptionalReturn:0.0);_callbacks.ref.clock=cb.nativeFunction;_release.add(cb.close);}
     if(hooks.machineBinding!=null){final cb=NativeCallable<Int32 Function(Pointer<Void>,Pointer<Char>,Size)>.isolateLocal((Pointer<Void> ctx,Pointer<Char> out,int n){try{final s=utf8.encode(_arg(hooks.machineBinding!()));if(s.length>=n)return 1;out.cast<Uint8>().asTypedList(s.length+1).setAll(0,[...s,0]);return 0;}catch(e){_failure=e;return 1;}},exceptionalReturn:1);_callbacks.ref.binding=cb.nativeFunction;_release.add(cb.close);}
@@ -78,6 +78,11 @@ final class Client {
   Object? requests()=>_call('requests');
   Object? requestAccess(List<String> modules,{String note=''})=>_call('request',{'modules':modules.map(_arg).toList(),'note':_arg(note)});
   String accessLink()=>_call('access-link') as String;
+  /// Service accounts and floating copies: requireModule checks a floating module
+  /// out by itself; enrolToken (else LICENSEBOX_ENROL_TOKEN) enrols on first lease.
+  Object? enrol(String token)=>_call('enrol',{'token':_arg(token)});
+  Object? checkout(String module)=>_call('checkout',{'module':_arg(module)});
+  void checkin([List<String> modules=const []]){_call('checkin',{'modules':modules.map(_arg).toList()});}
   void record(String command,{required bool success,required double elapsed}){if(!elapsed.isFinite||elapsed<0)throw const LicenseboxException('invalid_argument');_call('record',{'command':_arg(command),'success':success,'elapsed':elapsed});}
   static String deriveBinding(String product,String source,String raw){raw=raw.replaceFirst(RegExp(r'\x00+$'),'');if(raw.contains('\u0000'))throw const LicenseboxException('identity_unavailable');return using((a){final out=a<Char>(128);final r=_Native.derive(_arg(product).toNativeUtf8(allocator:a),_arg(source).toNativeUtf8(allocator:a),raw.toNativeUtf8(allocator:a),out,128);if(r!=0)throw _error(r);return out.cast<Utf8>().toDartString();});}
   static String nativeBinding(String product)=>using((a){final out=a<Char>(128);final r=_Native.native(_arg(product).toNativeUtf8(allocator:a),out,128);if(r!=0)throw _error(r);return out.cast<Utf8>().toDartString();});
